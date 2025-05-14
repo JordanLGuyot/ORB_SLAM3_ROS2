@@ -15,6 +15,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# Make find_package() use <PackageName>_ROOT variables (CMP0074)
+if(POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)
+endif()
+
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -26,9 +31,26 @@ find_package(ORB_SLAM3 REQUIRED)
 
 include_directories(
   include
-  ${ORB_SLAM3_ROOT_DIR}/include
-  ${ORB_SLAM3_ROOT_DIR}/include/CameraModels
-  ${ORB_SLAM3_ROOT_DIR}/Thirdparty/Sophus
+  ${ORB_SLAM3_ROOT}/include
+  ${ORB_SLAM3_ROOT}/include/CameraModels
+  ${ORB_SLAM3_ROOT}/Thirdparty/Sophus
+)
+
+# --- sanity: print once so you can see the final value -----------------
+message(STATUS "ORB_SLAM3_ROOT = ${ORB_SLAM3_ROOT}")
+
+# --- stop immediately if the header isn't found -----------------------
+if(NOT EXISTS "${ORB_SLAM3_ROOT}/include/CameraModels/GeometricCamera.h")
+  message(FATAL_ERROR
+    "GeometricCamera.h not found at expected path:\n  "
+    "${ORB_SLAM3_ROOT}/include/CameraModels/GeometricCamera.h")
+endif()
+
+# --- make sure the target gets the paths ------------------------------
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${ORB_SLAM3_ROOT}/include
+  ${ORB_SLAM3_ROOT}/include/CameraModels
 )
 
 link_directories(
